@@ -41,13 +41,13 @@ class NBAScraper:
         Fetch top 50 players by Points Per Game for the current season.
         """
         try:
-            # Try current season first, fallback to previous if needed
+            # Try current season (2025-26)
             try:
-                stats = leaguedashplayerstats.LeagueDashPlayerStats(season='2024-25', per_mode_detailed='PerGame')
+                stats = leaguedashplayerstats.LeagueDashPlayerStats(season='2025-26', per_mode_detailed='PerGame')
                 df = stats.get_data_frames()[0]
             except:
-                print("2024-25 not found, trying 2023-24")
-                stats = leaguedashplayerstats.LeagueDashPlayerStats(season='2023-24', per_mode_detailed='PerGame')
+                print("2025-26 not found, trying 2024-25")
+                stats = leaguedashplayerstats.LeagueDashPlayerStats(season='2024-25', per_mode_detailed='PerGame')
                 df = stats.get_data_frames()[0]
             
             top_50 = df.sort_values(by='PTS', ascending=False).head(50)

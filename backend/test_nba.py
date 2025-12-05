@@ -6,11 +6,11 @@ def get_top_50_players():
     # Fetch league leaders for the 2024-25 season
     # Note: If 2024-25 is not available yet in the API (pre-season), we might need 2023-24
     try:
-        stats = leaguedashplayerstats.LeagueDashPlayerStats(season='2024-25', per_mode_detailed='PerGame')
+        stats = leaguedashplayerstats.LeagueDashPlayerStats(season='2025-26', per_mode_detailed='PerGame')
         df = stats.get_data_frames()[0]
     except:
-        print("2024-25 not found, trying 2023-24")
-        stats = leaguedashplayerstats.LeagueDashPlayerStats(season='2023-24', per_mode_detailed='PerGame')
+        print("2025-26 not found, trying 2024-25")
+        stats = leaguedashplayerstats.LeagueDashPlayerStats(season='2024-25', per_mode_detailed='PerGame')
         df = stats.get_data_frames()[0]
     
     # Sort by Points (PTS) to get top players
