@@ -16,6 +16,7 @@ import {
 import { RefreshCw, TrendingUp, Search, Activity } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import TopPerformerCard from "@/components/TopPerformerCard";
 
 export default function Home() {
   const [assets, setAssets] = useState<Asset[]>([]);
@@ -81,7 +82,12 @@ export default function Home() {
             </p>
           </motion.div>
 
+          {/* Right side: Search + Add Funds */}
           <div className="flex items-center gap-4 w-full md:w-auto">
+            <Button variant="outline" className="border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/10 transition-colors">
+              + Add Funds
+            </Button>
+
             <div className="relative w-full md:w-64">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-500" />
               <Input
@@ -94,31 +100,42 @@ export default function Home() {
           </div>
         </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[
-            { title: "Market Cap", value: "$1.2M", change: "+2.5%", icon: TrendingUp },
-            { title: "Active Traders", value: "1,234", change: "+12%", icon: Activity },
-            { title: "Top Gainer", value: "LUKA", change: "+5.4%", icon: TrendingUp },
-          ].map((stat, i) => (
-            <motion.div
-              key={stat.title}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.1 }}
-            >
-              <Card className="bg-slate-900/50 border-slate-800 backdrop-blur-sm hover:border-slate-700 transition-colors">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-slate-400 uppercase tracking-wider">{stat.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold text-white">{stat.value}</div>
-                  <p className="text-sm text-emerald-400 flex items-center mt-2 font-medium">
-                    <stat.icon className="h-4 w-4 mr-1" /> {stat.change}
-                  </p>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
+        {/* Top Stats Section */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="md:col-span-1"
+          >
+            <TopPerformerCard />
+          </motion.div>
+
+          <div className="md:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              { title: "Market Cap", value: "$1.2M", change: "+2.5%", icon: TrendingUp },
+              { title: "Active Traders", value: "1,234", change: "+12%", icon: Activity },
+              { title: "Top Gainer", value: "LUKA", change: "+5.4%", icon: TrendingUp },
+            ].map((stat, i) => (
+              <motion.div
+                key={stat.title}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }}
+              >
+                <Card className="bg-slate-900/50 border-slate-800 backdrop-blur-sm hover:border-slate-700 transition-colors h-full flex flex-col justify-center">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-slate-400 uppercase tracking-wider">{stat.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-3xl font-bold text-white">{stat.value}</div>
+                    <p className="text-sm text-emerald-400 flex items-center mt-2 font-medium">
+                      <stat.icon className="h-4 w-4 mr-1" /> {stat.change}
+                    </p>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
         </div>
 
         <motion.div
@@ -162,7 +179,14 @@ export default function Home() {
                             {asset.ticker}
                           </Link>
                         </TableCell>
-                        <TableCell className="text-slate-200 font-medium">
+                        <TableCell className="text-slate-200 font-medium flex items-center gap-3">
+                          {/* Tiny headshot in table */}
+                          <img
+                            src={`https://cdn.nba.com/headshots/nba/latest/1040x760/${asset.id}.png`}
+                            alt={asset.name}
+                            className="w-8 h-8 rounded-full bg-slate-800 object-cover object-top"
+                            onError={(e) => { (e.target as HTMLImageElement).src = 'https://cdn.nba.com/headshots/nba/latest/1040x760/logoman.png' }}
+                          />
                           <Link href={`/assets/${asset.id}`} className="hover:underline">
                             {asset.name}
                           </Link>

@@ -33,3 +33,19 @@ export async function getAssetHistory(id: string): Promise<any[]> {
     if (!res.ok) throw new Error('Failed to fetch asset history');
     return res.json();
 }
+
+export async function getTopPerformer() {
+    try {
+        const res = await fetch(`${API_URL}/top-performer`, { cache: 'no-store' });
+        if (!res.ok) return null;
+        return res.json();
+    } catch (e) {
+        return null;
+    }
+}
+
+export async function getAssetLogs(id: string): Promise<any[]> {
+    const res = await fetch(`${API_URL}/assets/${id}/logs`, { cache: 'no-store' });
+    if (!res.ok) throw new Error('Failed to fetch asset logs');
+    return res.json();
+}

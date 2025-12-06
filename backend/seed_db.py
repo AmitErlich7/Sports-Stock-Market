@@ -10,11 +10,10 @@ def seed_db():
     try:
         count = db.query(models.Asset).count()
         if count > 0:
-            print(f"Database already has {count} assets.")
-            # Optional: Clear DB to force refresh
-            # db.query(models.Asset).delete()
-            # db.commit()
-            return
+            print(f"Database has {count} assets. Clearing them to refresh IDs...")
+            # Force refresh to fix IDs
+            db.query(models.Asset).delete()
+            db.commit()
 
         print("Fetching top 50 players...")
         scraper = NBAScraper()

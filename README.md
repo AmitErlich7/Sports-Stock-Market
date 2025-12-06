@@ -9,67 +9,44 @@ A real-time sports stock market where you can invest in NBA players. Prices are 
 
 ## 🚀 Getting Started
 
-### Option A: Easy Start (Windows)
-Just double-click the `start_app.bat` file in this folder! 
-It will automatically open the backend and frontend for you.
 
-### Option B: Manual Setup
-
-#### 1. Backend Setup (Python)
-
-The backend handles data fetching (NBA API), pricing logic, and the database.
-
-1. Navigate to the backend directory:
+### Option A: Quick Install (GitHub Users)
+1. **Clone the repository** to your local machine:
    ```bash
-   cd backend
+   git clone <YOUR_REPO_URL>
+   cd Sports-Stock-Market
    ```
+2. **Run Setup** (One time only):
+   - Double-click `setup_app.bat`
+   - **OR** run in terminal: `.\setup_app.bat`
+3. **Start the App**:
+   - Double-click `start_app.bat`
+   - **OR** run in terminal: `.\start_app.bat`
 
-2. Create a virtual environment:
-   ```bash
-   python -m venv venv
-   ```
+### Option B: Already Installed?
+Start the app:
+- Double-click `start_app.bat`
+- **OR** run in terminal: `.\start_app.bat`
 
-3. Activate the virtual environment:
-   - **Windows**: `.\venv\Scripts\activate`
-   - **Mac/Linux**: `source venv/bin/activate`
+### 💻 Contributing & Development
 
-4. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
+Want to add new features? Great! Please follow this workflow:
 
-5. **Initialize the Database** (Fetch top 50 players):
-   ```bash
-   python seed_db.py
-   ```
-
-6. Start the Backend Server:
-   ```bash
-   uvicorn main:app --reload --port 8000
-   ```
-   The API will be running at `http://localhost:8000`.
-
-### 2. Frontend Setup (Next.js)
-
-The frontend is a modern dashboard built with Next.js, Tailwind CSS, and Shadcn UI.
-
-1. Open a new terminal and navigate to the project root:
-   ```bash
-   cd ..
-   # or cd C:\path\to\Sports-Stock-Market
-   ```
-
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-3. Start the Frontend Server:
-   ```bash
-   npm run dev
-   ```
-
-4. Open [http://localhost:3000](http://localhost:3000) in your browser.
+1.  **Create a Branch**:
+    ```bash
+    git checkout -b feature/your-feature-name
+    ```
+2.  **Make Changes**: Edit the code in your editor.
+3.  **Commit Changes**:
+    ```bash
+    git add .
+    git commit -m "Add description of your changes"
+    ```
+4.  **Push to GitHub**:
+    ```bash
+    git push origin feature/your-feature-name
+    ```
+5.  **Create a Pull Request**: Go to GitHub and click "Compare & pull request" to merge your changes.
 
 ## 📈 How to Use
 

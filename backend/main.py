@@ -5,6 +5,7 @@ from database import engine, Base, get_db
 import models
 from scraper import NBAScraper
 from pricing import PricingEngine
+from datetime import datetime, timedelta
 import random
 
 # Create tables
@@ -47,10 +48,11 @@ def init_assets(db: Session = Depends(get_db)):
         
         if not players:
             # Fallback if API fails
+            # Fallback if API fails
             players = [
-                {"name": "LeBron James", "ticker": "LBJ", "current_price": 50.0, "projected_stats": {"PTS": 25.0, "AST": 7.0, "REB": 7.0}},
-                {"name": "Stephen Curry", "ticker": "SC30", "current_price": 45.0, "projected_stats": {"PTS": 28.0, "AST": 5.0, "REB": 4.0}},
-                {"name": "Luka Doncic", "ticker": "LUKA", "current_price": 55.0, "projected_stats": {"PTS": 32.0, "AST": 9.0, "REB": 8.0}},
+                {"id": "2544", "name": "LeBron James", "ticker": "LBJ", "current_price": 50.0, "projected_stats": {"PTS": 25.0, "AST": 7.0, "REB": 7.0}},
+                {"id": "201939", "name": "Stephen Curry", "ticker": "SC30", "current_price": 45.0, "projected_stats": {"PTS": 28.0, "AST": 5.0, "REB": 4.0}},
+                {"id": "1629029", "name": "Luka Doncic", "ticker": "LUKA", "current_price": 55.0, "projected_stats": {"PTS": 32.0, "AST": 9.0, "REB": 8.0}},
             ]
             
         for p in players:
@@ -128,7 +130,60 @@ def get_asset_details(asset_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Asset not found")
     return asset
 
+@app.get("/assets/{asset_id}/logs")
+def get_asset_logs(asset_id: str, db: Session = Depends(get_db)):
+    """
+    Get match logs (recent games) for an asset.
+    """
+    try:
+        logs = db.query(models.MatchLog).filter(models.MatchLog.asset_id == asset_id).order_by(models.MatchLog.game_date.desc()).all()
+        
+        # If no logs in DB, try to fetch real last game
+        if not logs:
+            scraper = NBAScraper()
+            last_game = scraper.get_last_game_log(asset_id)
+            
+            if last_game:
+                # Calculate performance score (Generic algo for now: PTS + REB + AST)
+                perf_score = last_game['pts'] + last_game['reb'] + last_game['ast']
+                
+                new_log = models.MatchLog(
+                    asset_id=asset_id,
+                    game_date=datetime.strptime(last_game['game_date'], "%b %d, %Y"),
+                    opponent=last_game['matchup'],
+                    stats={
+                        "PTS": last_game['pts'],
+                        "REB": last_game['reb'],
+                        "AST": last_game['ast']
+                    },
+                    performance_score=perf_score
+                )
+                db.add(new_log)
+                db.commit()
+                db.refresh(new_log)
+                return [new_log]
+                
+        return logs
+    except Exception as e:
+        print(f"Error getting logs for {asset_id}: {e}")
+        return []
+
 @app.get("/assets/{asset_id}/history")
 def get_asset_history(asset_id: str, db: Session = Depends(get_db)):
     history = db.query(models.PriceHistory).filter(models.PriceHistory.asset_id == asset_id).order_by(models.PriceHistory.timestamp).all()
     return history
+
+@app.get("/top-performer")
+def get_top_performer():
+    """
+    Returns the top performing player from the last game night.
+    """
+    performer = scraper.get_top_performer()
+    if not performer:
+        # Fallback Mock Data if no games/error
+        return {
+            "id": "2544", # LeBron
+            "name": "LeBron James",
+            "stats": {"PTS": 35, "AST": 9, "REB": 8}
+        }
+    return performer
