@@ -6,19 +6,13 @@ export interface Asset {
     ticker: string;
     current_price: number;
     projected_stats: any;
+    last_game_stats?: any;
+    last_game_date?: string;
 }
 
 export async function getAssets(): Promise<Asset[]> {
     const res = await fetch(`${API_URL}/assets`, { cache: 'no-store' });
     if (!res.ok) throw new Error('Failed to fetch assets');
-    return res.json();
-}
-
-export async function simulateGame(assetId: string) {
-    const res = await fetch(`${API_URL}/simulate?asset_id=${assetId}`, {
-        method: 'POST',
-    });
-    if (!res.ok) throw new Error('Failed to simulate game');
     return res.json();
 }
 

@@ -164,15 +164,15 @@ export default function AssetPage() {
 
                                         <div className="grid grid-cols-3 gap-2">
                                             <div className="bg-slate-800/50 rounded-lg p-3 text-center">
-                                                <div className="text-2xl font-bold text-white">{latestLog.stats.PTS}</div>
+                                                <div className="text-2xl font-bold text-white">{Math.round(latestLog.stats.PTS)}</div>
                                                 <div className="text-[10px] text-slate-400 uppercase tracking-wider">PTS</div>
                                             </div>
                                             <div className="bg-slate-800/50 rounded-lg p-3 text-center">
-                                                <div className="text-2xl font-bold text-white">{latestLog.stats.REB}</div>
+                                                <div className="text-2xl font-bold text-white">{Math.round(latestLog.stats.REB)}</div>
                                                 <div className="text-[10px] text-slate-400 uppercase tracking-wider">REB</div>
                                             </div>
                                             <div className="bg-slate-800/50 rounded-lg p-3 text-center">
-                                                <div className="text-2xl font-bold text-white">{latestLog.stats.AST}</div>
+                                                <div className="text-2xl font-bold text-white">{Math.round(latestLog.stats.AST)}</div>
                                                 <div className="text-[10px] text-slate-400 uppercase tracking-wider">AST</div>
                                             </div>
                                         </div>

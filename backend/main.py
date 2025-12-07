@@ -33,9 +33,94 @@ def read_root():
 def health_check():
     return {"status": "ok"}
 
+def sync_price_with_real_game(asset, db: Session):
+    """
+    Fetches the last real game, compares with projection, and updates price.
+    Returns True if an update happened, False otherwise.
+    """
+    try:
+        last_game = scraper.get_last_game_log(asset.id)
+        if not last_game:
+            return False
+
+        game_date = datetime.strptime(last_game['game_date'], "%b %d, %Y")
+        
+        # Check if this game is already processed
+        existing_log = db.query(models.MatchLog).filter(
+            models.MatchLog.asset_id == asset.id,
+            models.func.date(models.MatchLog.game_date) == game_date.date()
+        ).first()
+
+        if existing_log:
+            return False # Already processed
+
+        # It's a new game! Calculate price change.
+        actual_stats = {
+            "PTS": last_game['pts'],
+            "AST": last_game['ast'],
+            "REB": last_game['reb'],
+            "STL": last_game['stl'],
+            "BLK": last_game['blk'],
+            "TOV": last_game['tov']
+        }
+        
+        proj = asset.projected_stats
+        proj_score = pricing_engine.calculate_performance_score(proj)
+        actual_score = pricing_engine.calculate_performance_score(actual_stats)
+        
+        new_price = pricing_engine.calculate_new_price(asset.current_price, proj_score, actual_score)
+        
+        # Update Asset
+        asset.current_price = new_price
+        
+        # Create Log
+        match_log = models.MatchLog(
+            asset_id=asset.id,
+            game_date=game_date,
+            opponent=last_game['matchup'],
+            stats=actual_stats,
+            performance_score=actual_score
+        )
+        db.add(match_log)
+        
+        # Record Price History
+        price_history = models.PriceHistory(
+            asset_id=asset.id,
+            price=new_price
+        )
+        db.add(price_history)
+        
+        db.commit()
+        print(f"Updated {asset.ticker} based on game vs {last_game['matchup']}: ${new_price}")
+        return True
+    except Exception as e:
+        print(f"Error syncing {asset.ticker}: {e}")
+        return False
+
 @app.get("/assets")
 def get_assets(db: Session = Depends(get_db)):
-    return db.query(models.Asset).all()
+    assets = db.query(models.Asset).all()
+    
+    # Attach last game stats to the response
+    results = []
+    for asset in assets:
+        # Get latest log
+        latest_log = db.query(models.MatchLog).filter(
+            models.MatchLog.asset_id == asset.id
+        ).order_by(models.MatchLog.game_date.desc()).first()
+        
+        asset_dict = {
+            "id": asset.id,
+            "name": asset.name,
+            "ticker": asset.ticker,
+            "current_price": asset.current_price,
+            "projected_stats": asset.projected_stats,
+            "last_game_stats": latest_log.stats if latest_log else None,
+            "last_game_date": latest_log.game_date if latest_log else None
+        }
+        results.append(asset_dict)
+        
+    return results
 
 @app.post("/assets/init")
 def init_assets(db: Session = Depends(get_db)):
@@ -48,80 +133,29 @@ def init_assets(db: Session = Depends(get_db)):
         
         if not players:
             # Fallback if API fails
-            # Fallback if API fails
             players = [
                 {"id": "2544", "name": "LeBron James", "ticker": "LBJ", "current_price": 50.0, "projected_stats": {"PTS": 25.0, "AST": 7.0, "REB": 7.0}},
                 {"id": "201939", "name": "Stephen Curry", "ticker": "SC30", "current_price": 45.0, "projected_stats": {"PTS": 28.0, "AST": 5.0, "REB": 4.0}},
                 {"id": "1629029", "name": "Luka Doncic", "ticker": "LUKA", "current_price": 55.0, "projected_stats": {"PTS": 32.0, "AST": 9.0, "REB": 8.0}},
             ]
             
+        created_assets = []
         for p in players:
-            # Check if ticker exists (handle duplicates from simple ticker generation)
+            # Check if ticker exists
             if not db.query(models.Asset).filter(models.Asset.ticker == p['ticker']).first():
                 asset = models.Asset(**p)
                 db.add(asset)
+                created_assets.append(asset)
+        
         db.commit()
-        return {"message": f"Initialized {len(players)} assets"}
+
+        # Update prices based on last game for all new assets
+        print("Syncing initial prices with last game stats...")
+        for asset in created_assets:
+            sync_price_with_real_game(asset, db)
+            
+        return {"message": f"Initialized {len(created_assets)} assets"}
     return {"message": "Assets already exist"}
-
-@app.post("/simulate")
-def simulate_game(asset_id: str, db: Session = Depends(get_db)):
-    """
-    Simulate a game for an asset (or fetch real stats if available).
-    For MVP, we might mock the 'real' stats if no live game is on.
-    """
-    asset = db.query(models.Asset).filter(models.Asset.id == asset_id).first()
-    if not asset:
-        raise HTTPException(status_code=404, detail="Asset not found")
-
-    # 1. Get Real Stats (or Mock)
-    # In a real scenario, we'd call scraper.get_player_stats(asset.player_id)
-    # For MVP demo, let's generate random 'actual' stats based on projection
-    
-    proj = asset.projected_stats
-    actual_stats = {
-        "PTS": proj.get("PTS", 20) * random.uniform(0.8, 1.2),
-        "AST": proj.get("AST", 5) * random.uniform(0.8, 1.2),
-        "REB": proj.get("REB", 5) * random.uniform(0.8, 1.2),
-        "STL": random.randint(0, 3),
-        "BLK": random.randint(0, 2),
-        "TOV": random.randint(0, 5)
-    }
-
-    # 2. Calculate Performance
-    proj_score = pricing_engine.calculate_performance_score(proj)
-    actual_score = pricing_engine.calculate_performance_score(actual_stats)
-
-    # 3. Update Price
-    new_price = pricing_engine.calculate_new_price(asset.current_price, proj_score, actual_score)
-    
-    # 4. Record History
-    asset.current_price = new_price
-    
-    match_log = models.MatchLog(
-        asset_id=asset.id,
-        game_date=models.func.now(),
-        opponent="Simulation",
-        stats=actual_stats,
-        performance_score=actual_score
-    )
-    db.add(match_log)
-    
-    price_history = models.PriceHistory(
-        asset_id=asset.id,
-        price=new_price
-    )
-    db.add(price_history)
-    
-    db.commit()
-    
-    return {
-        "asset": asset.name,
-        "old_price": asset.current_price, # Note: this is actually new price now
-        "new_price": new_price,
-        "actual_score": actual_score,
-        "projected_score": proj_score
-    }
 
 @app.get("/assets/{asset_id}")
 def get_asset_details(asset_id: str, db: Session = Depends(get_db)):

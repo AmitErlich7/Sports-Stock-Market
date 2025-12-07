@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getAssets, simulateGame, Asset } from "@/lib/api";
+import { getAssets, Asset } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,18 +46,6 @@ export default function Home() {
     }, 3000);
     return () => clearInterval(interval);
   }, []);
-
-  const handleSimulate = async (id: string) => {
-    setLoading(true);
-    try {
-      await simulateGame(id);
-      await fetchData();
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const filteredAssets = assets.filter(asset =>
     asset.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -204,23 +192,39 @@ export default function Home() {
                         <TableCell className="text-slate-400">
                           {asset.projected_stats?.PTS?.toFixed(1) || '-'}
                         </TableCell>
+                        <TableCell className="text-slate-400 border-l border-slate-800/50 pl-4 bg-slate-800/10">
+                          {asset.last_game_stats ? (
+                            <div className="flex gap-3 text-sm">
+                              <div className="flex flex-col">
+                                <span className="text-[10px] text-slate-500 uppercase">PTS</span>
+                                <span className="font-bold text-white">{asset.last_game_stats.PTS}</span>
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="text-[10px] text-slate-500 uppercase">REB</span>
+                                <span className="font-bold text-slate-300">{asset.last_game_stats.REB}</span>
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="text-[10px] text-slate-500 uppercase">AST</span>
+                                <span className="font-bold text-slate-300">{asset.last_game_stats.AST}</span>
+                              </div>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-slate-600 italic">No recent game</span>
+                          )}
+                        </TableCell>
                         <TableCell className="text-right">
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            onClick={() => handleSimulate(asset.id)}
-                            disabled={loading}
-                            className="bg-slate-800 text-slate-200 hover:bg-emerald-600 hover:text-white transition-all duration-300"
-                          >
-                            Simulate
-                          </Button>
+                          {asset.last_game_date && (
+                            <span className="text-xs text-slate-500">
+                              {new Date(asset.last_game_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                            </span>
+                          )}
                         </TableCell>
                       </motion.tr>
                     ))}
                   </AnimatePresence>
                   {filteredAssets.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center py-8 text-slate-500">
+                      <TableCell colSpan={6} className="text-center py-8 text-slate-500">
                         No players found matching "{searchQuery}"
                       </TableCell>
                     </TableRow>

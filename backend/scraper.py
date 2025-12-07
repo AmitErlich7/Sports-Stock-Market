@@ -43,7 +43,7 @@ class NBAScraper:
         try:
             # Try current season first
             for season in ['2024-25', '2023-24']:
-                gamelog = playergamelog.PlayerGameLog(player_id=player_id, season=season, last_n_games=1)
+                gamelog = playergamelog.PlayerGameLog(player_id=player_id, season=season)
                 df = gamelog.get_data_frames()[0]
                 if not df.empty:
                     log = df.iloc[0]
@@ -53,6 +53,9 @@ class NBAScraper:
                         "pts": int(log['PTS']),
                         "reb": int(log['REB']),
                         "ast": int(log['AST']),
+                        "stl": int(log['STL']),
+                        "blk": int(log['BLK']),
+                        "tov": int(log['TOV']),
                         "wl": log['WL']
                     }
             return None
